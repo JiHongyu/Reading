@@ -574,14 +574,139 @@ void func(T const& val){
 
 ```c++
 template<typename T>
-    class Derived: public Base<T>::Nested{//禁止 typename
+    class Derived: public Base<T>::Nested{    //禁止 typename
     public:
         explicit Derived(): Base<T>::Nested   //禁止 typename
             {
-                typename Base<T>::Nested t;       //可以 typename
+                typename Base<T>::Nested t;   //可以 typename
                 //...
             }
     };
 ```
 
 基于嵌套从属的typename关键字的实现好像不好，在不同的编译器特别是老旧编译器会出现各种问题。
+
+## 面向对象与泛型编程的冲突：模板基类的名字
+
+继承类无法直接使用模板基类的函数，因为模板基类在编译前未确定。
+
+但是现在的编译器好像对这个问题放松了限制。至少在VS2013上是可以编译通过的。
+
+```c++
+template<typename T>
+class Base{
+public:
+    void func(){}
+};
+
+template<>
+class Base<int>{
+
+};
+
+template<typename T>
+class Derived : public Base<T>{
+public:
+    Derived(){ func(); }
+};
+
+int main(){
+    auto obj1 = new Derived<char>();//OK
+    auto obj2 = new Derived<int>(); //ERROR
+    exit(0);
+}
+```
+
+## Part 44: 略
+
+## Part 46: 略
+
+## Part 47: Traits 技术
+
+基于协议的编译期多态技术
+
+```c++
+// Traits 标识
+struct test_a_tag {};
+struct test_b_tag {};
+struct test_c_tag: test_a_tag {};
+
+// Traits 协议
+template<typename T>
+struct test_traits{
+    typedef typename T::type_category type_category; //一种协议
+
+    //可能还存在其他协议
+};
+
+// 定义基于Traits协议的类
+class CTestA{
+public: typedef test_a_tag type_category;
+};
+
+class CTestB{
+public: typedef test_b_tag type_category;
+};
+
+class CTestC{
+public: typedef test_c_tag type_category;
+};
+
+// Traits内层函数
+void inner_func(test_a_tag){/*...*/}
+void inner_func(test_b_tag){/*...*/}
+void inner_func(test_c_tag){/*...*/}
+
+// Traits接口函数
+template<typename T>
+void func(T const& val){
+    inner_func(test_traits<T>::type_category());
+}
+
+int main(){
+    func(CTestA());
+    func(CTestB());
+    func(CTestC());
+    exit(0);
+}
+```
+
+由上面的示例代码可知，一个完整的Traits代码由4部分组成：
+
++ Traits 标识：用于实现编译多态；
++ Traits 协议：保证Traits名字的一致性；
++ Traits 类：包含Traits标识及协议的类；
++ Traits函数：满足Traits协议的函数。有两部分组成：内层函数和接口函数：
+    * 内层函数：一组基于Traits标识的重载函数，是Traits技术的核心；
+    * 接口函数：一般是模板函数，根据Traits的差异调用不同的内层函数。
+
+## Part 48: 模板元编程
+
+TMP（Template metaprogramming）是图灵完备的，它将计算过程由运行时移到了编译时。Traits技术就是TMP的一项应用。
+
+## Part 49: new handler行为
+
+```c++
+typedef void ( *new_handler )( );
+
+new_handler set_new_handler( 
+   new_handler _Pnew 
+) throw( );
+```
+
+new_handle 是一个函数指针，当operator new 内存分配失败时调用。
+new_handle 用 set_new_handler 函数装载。
+
+## Part 50: 略
+
+## Part 51: 略
+
+## Part 52: 略
+
+## Part 53: 不要忽略编译器的警告
+
+## Part 54: 向C++11，C++14进发
+
+## Part 55: 去尝试了解Boost
+
+
