@@ -11,8 +11,9 @@
 
 ### \#define的缺点
 + 编译器编译阶段会将宏定义等价替换，宏定义符号不会在后面的阶段出现，若后面出现了错误不好及时定位。
-+ \#define不能创建一个基于一段作用域的常量（除非\#undef），缺少封装性。
-+ 基于\#define的宏函数在操作自加/自减运算符时也会造成意想不到的错误。
++ \#define 只能和\#undef 配合使用构造一段作用域生命周期，缺少封装性。
++ \#define 有时替换数值常量，有时替换符号变量，左值右值混乱
++ 基于\#define的宏函数在操作自加/自减运算符时也会造成意想不到的错误（参考但不限于第三条）。
 
 ### 基于class 的专属常量
 
@@ -24,7 +25,7 @@ class CA{
 };
 
 //xx.cpp
-static const int NUM; //常量定义式
+static const int CA::NUM; //常量定义式
 ```
 
 最好（容易理解）以如下写法
@@ -35,17 +36,48 @@ class CA{
 };
 
 //xx.cpp
-static const int NUM = 10; //常量定义式
+static const int CA::NUM = 10; //常量定义式
 ```
+或者（VS2013 编译通过）
+```c++
+//xx.h
+class CA{
+    static const int NUM = 10;   //常量声明式
+};
+
+```
+
 ## Part 3: 尽量使用const
 
-const 与变量和对象的结合无须赘述
+### const 变量声明
 
-###const 与函数返回值结合
+法则：
 
-避免未定义错误
++ const 关键字修饰其前面的东西
++ const 关键字可以与类型名互换
 
-###const 的成员函数
+例子
+```c++
+// vi 是常量
+int vi = 0;
+// ci 是常量
+int const ci = 0;     //等价于 const int ci=0
+//p1 是常量
+int * const p1 = const_cast<int*>(&ci);
+//不能通过p2 改变其指向的东西
+const int * p2 = &ci; //等价于 int const *p2 = &i
+//p1 = NULL;  //ERROR
+p2 = &vi;     //OK
+//*p2 = 10;   //ERROR
+```
+
+### const 与函数返回值结合
+
+返回常量对象避免右值错误的在左边
+
+### const 的成员函数
+
+const 成员函数里禁止修改成员变量（成员指针所指向的东西它是不管的），且原则上 const 成员函数不能调用 non-const成员函数。const 成员函数的目的是使该成员函数是可以作用于 **const 对象** 的。
 
 两个成员函数的常量性不同，是可以被重载的。为了避免常量性不同的重载成员函数的代码重复，可以使用non-const函数调用const函数，但是要注意类型转换（一次或两次）。
 ```c++
@@ -56,15 +88,27 @@ public:
         //...
     }
     int& operator[](int input){
-        return const_cast<int&>(static_cast<const Test&>(*this)[input]);
+        return const_cast<int&>(       // 对输出结果转型，去掉 const 属性
+            static_cast<const Test&>(  // 对对象本身转型，添加 const 属性，调用器重载版本，避免递归调用
+                *this
+            )[input]
+        );
     }
     ~Test();
 };
 ```
 
+该例子中两个函数的地位从技术上是可以对调的：实现代码在 non-const 函数里面，const 函数调用其重载的 non-const版本。但是语义上 const 函数是不能调用 non-const 函数的，若果要实现需要对 \*this 进行强制转型，比如
+`const_cast< Cxx &>(\*this)`，这样会引起混乱。
+
+
+不恰当的 const成员函数：返回一个 non-const的成员指针或引用数据，虽然这不违反语法规则，但是违反了语义规则。
+
+mutable 关键字成员变量：在 const 成员函数中可以修改修改这些变量。
+
 ## Part 4: 对象初始化
 
-对象的初始化过程只发生在构造函数初始化列表里，而不是构造函数的函数体里。
+对象的初始化过程只发生在 **初始化列表** 里，而不是构造函数的函数体里。构造函数里是普通的赋值之类的语句。
 
 成员变量的初始化顺序是依照其在class里的声明顺序而定。
 ```c++
@@ -79,20 +123,16 @@ class CTest{
 
 trival函数簇包括有：
 
-+ default构造函数
++ default构造函数：当有其他构造函数时，trival default构造函数不会生成。
 
-当有其他构造函数时，trival default构造函数不会生成。
++ 析构函数：析构函数的virtual性质由其父类决定，默认是非虚的。
 
-+ 析构函数
-
-析构函数的virtual性质由其父类决定，默认是非虚的。
-
-+ copy构造函数
-+ copy assignement操作符重载
-
-两个函数功能相似，都是努力进行成员变量的复制（深拷贝）。但是operator=的生成局限性较大。比如成员变量有引用属性，常量属性，基类operator=是私有的（不满足复制操作）。
++ copy构造函数：下述
++ copy assignement操作符重载：以上两个函数功能相似，都是努力进行成员变量的复制（深拷贝）。
 
 在适时的时候（需要被使用时），这些函数可以在编译阶段自动地生成。
+
+在某些情况：成员变量有引用属性，常量属性等时，必须自己写这些函数。
 
 ## Part 6: 阻止trival函数簇自动生成
 
@@ -129,7 +169,14 @@ class Test: private Uncopyable
 
 ## Part 9: 不要再构造或析构函数中调用virtual函数
 
-在继承链中的各个构造和析构函数调用中，被调的virtual函数都是同属于其等价的继承链中。
+在继承链中的各个构造和析构函数调用中，被调的virtual函数都是同属于其等价的继承链上的函数。
+
+详细说明：
+
++ 构造函数跟虚构函数里面都可以调用虚函数，编译器不会报错；
++ 由于类的构造次序是由基类到派生类，所以在构造函数中调用虚函数，虚函数是不会呈现出多态的
++ 类的析构是从派生类到基类，当调用继承层次中某一层次的类的析构函数时意味着其派生类部分已经析构掉，所以也不会呈现多态
++ 因此如果在基类中声明的纯虚函数并且在基类的析构函数中调用之，编译器会发生错误。
 
 ## Part 10: 令 operator= 返回一个reference to \*this
 
@@ -155,8 +202,11 @@ public:
 
 对象自我复杂的情况：
 
-+ 
-自我复制的成员安全性和异常安全性问题。特别是成员变量包含指针数据。
+自我复制的 **成员安全性** 和 **异常安全性** 问题。特别是成员变量包含指针数据。
+
++ 成员安全性：自我复制检查
++ 异常安全性：先申请资源后释放资源
+
 ```c++
 struct Data{
     int  len;
@@ -170,20 +220,21 @@ private:
     Data * _data;
 public:
     // 不具有成员变量安全性和异常安全性
-    CTest& operator=(CTest const& val){
+    CTest& operator= (CTest const& val){
         delete _data;
         _data = new Data(val._data);
         return *this;
     }
     // 不具有异常安全性
-    CTest& operator+=(CTest const& val){
+    CTest& operator= (CTest const& val){
         if( this == &val) return *this;
         delete _data;
         _data = new Data(val._data);
         return *this;
     }
     // Good code 虽然没有自我检查
-      CTest& operator+=(CTest const& val){
+    // 资源分配好了再释放原有资源
+      CTest& operator= (CTest const& val){
         Data *pori = _data;
         _data = new Data(val._data);
         delete pori;
@@ -199,10 +250,10 @@ public:
 
 基于对象的资源封装可以减少大量的资源泄露。这是因为资源（文件句柄，堆上的内存）的生命周期是不可控的，但是栈对象的生命周期是可控的。例如C++的内置智能指针，就是对原始指针的封装，保证对象在其作用域外肯定被释放掉：
 
-+ auto_ptr: 指向唯一的智能指针，在copy构造函数或copy assignment函数中进行复制会使原来的指针指向 null。
-
++ auto_ptr (C++98): 指向唯一的智能指针，在copy构造函数或copy assignment函数中进行复制会使原来的指针指向 null。
 + shared_ptr (C++11): 基于引用计数器的智能指针，可以像正常指针一样使用。
-
++ unique_ptr (C++11): 独占指针对象，并保证指针所指对象生命周期与其一致。禁止赋值，保留了移动构造函数
++ weak_ptr (C++11): 它不能决定所指对象的生命周期，引用所指对象时，需要lock()成shared_ptr才能使用
 注：auto_ptr和shared_ptr是基于delete而不是delete[]来回收资源所以不能将其作用域数组对象。
 
 无论是否使用C++的内置资源管理器，对资源的封装是对资源控制的最好办法。
@@ -263,12 +314,17 @@ delete[] p3; //这里要加[]
 
 其实为了避免错误，应当尽量少用typedef定义数组别名。
 
-## Part 17: 不要在函数参数调用过多的方法
+## Part 17: 不要在函数参数调用过多的函数
 
-函数参数中的代码执行顺序是未定义的，取决于编译器的实现方式及代码优化。
+函数参数中的代码执行顺序是未定义的，取决于编译器的实现方式及代码优化方法。
 
 
 ## Part 18: 让接口容易被使用，不容易被误用
+
+构造函数前加 explict 关键字，避免隐式转换
+
+尽量少进行类型转换
+
 
 ## Part 19: 设计Class的关键点
 
@@ -285,6 +341,7 @@ delete[] p3; //这里要加[]
 ## Part 20: 值传递和引用传递
 
 值传递的适用场景：
+
 + 内置类型
 + 函数对象（仿函数）
 + STL的迭代器
@@ -309,6 +366,8 @@ public和protected成员意味着其变量或方法可能会被外部或者其�
 class的封装性不一定体现在成员函数的数量上。需要有效的利用namespace。
 
 ## Part 24: 所有类型皆需类型转换，需要使用非成员函数（什么鬼）
+
+必要时使用 friend 函数
 
 ## Part 25: 实现一个高效的swap函数
 
@@ -357,7 +416,7 @@ private:
     int * pdata;
 public:
     void swap(CTest & _r){
-        using std::swap;
+        using std::swap;     //在此声明，避免名字冲突
         swap(pdata, _r.pdata);
     }
 };
@@ -398,7 +457,7 @@ C++风格转型：
 
 + const_cast <T\> (expression)
 
-对象常量性质转移(const <> non-const)
+移除对象的常量性质
 
 + dynamic_cast <T\> (expression)
 
@@ -406,11 +465,11 @@ C++风格转型：
 
 + reinterpret_cast <T\> (expression)
 
-任意转换，一般用于低级代码。
+任意转换，一般用于低级代码(C风格)。
 
 + static_cast <T\> (expression)
 
-强迫隐式转换。无法将 const 转换为 non-const
+强迫隐式转换。可以讲 non-const 转换为 const，无法将 const 转换为 non-const
 
 在C++编程中尽量少用转换，当代码中出现了类型转换，要仔细想想是否自己的代码错了。如果要用类型转换，尽量用C++风格的类型转换，减少非法类型转换带来的错误。
 
@@ -708,5 +767,3 @@ new_handle 用 set_new_handler 函数装载。
 ## Part 54: 向C++11，C++14进发
 
 ## Part 55: 去尝试了解Boost
-
-
