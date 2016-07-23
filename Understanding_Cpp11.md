@@ -241,7 +241,7 @@ explict 可作用于 class 的自定义转换类型，强制要求显式转换�
 
 ### 列表初始化 {}
 
-__基本形式：__
+基本形式：
 
 ```c++
 int a { 0 };
@@ -251,7 +251,8 @@ int *d = new int{ 10 };
 int *e = new int[2]{ 10, 100 };
 int f[] {1, 2, 3, 4, 5};
 int g[] = { 6, 7, 8, 9, 0 };
-``` 
+```
+
 列表初始化支持所有的STL容器（应该吧）。
 
 自定义类型的列表初始化需要用到头文件 `<initializer_list>` 的 模板类 `initialize_list<T>` 来构造 **initialize_list 构造函数**。该模板类也可以用来构造函数参数的列表初始化行为。
@@ -330,4 +331,79 @@ C++11 加入 `auto` 并不意味着 C++11 带有动态类型的特性。
 // 两个宏的计算量是不一样的
 max1(1*2*3, 4*5*6)
 max2(1*2*3, 4*5*6)
+```
+
+`auto` 使用细则：
+
++ `auto` 可以推导指针类型，但是引用类型必须显式标明 `auto &`；
++ `auto` 可以与 `volatile` 或 `const` 连用，但是类型推导却不会推导这些属性；
++ 在同一个赋值语句中，`auto` 声明的变量类型必须相同；
++ `auto` 可用于初始化列表。
+
+`auto` 的限制（语义或者实现难度）：
+
++ 函数形参不能用 `auto`；
++ `class` 的非静态成员不能用 `auto`。
++ `auto` 数组是搞笑的；
++ 模板类型不能写成 `auto`。
+
+### typeid 与 decltype
+
+C++98 支持的动态类型部分 (RTTI)：
+
++ `typeid` `type_info`
+
+`decltype` 是不同于 `auto` 的类型推导，`decltype` 以一个表达式作为参数，返回该表达式的类型。
+
+`decltype` 的推导规则，原型 `decltype(e)`，`e` 的类型为 `T`：
+
+1. 如果，`e` 没有带括号，常规使用。注意 `e` 不能是重载函数；（写法有问题）
+2. 否则，`e` 是将亡值（右值的一种），则结果为 `T &&`；
+3. 否则，`e` 是左值，则结果为 `T &`；
+4. 否则，`e` 是其余右值，则结果为 `T`。
+
+注意以下区别
+
+```c++
+decltype(++i)
+
+decltype(i++)
+```
+
+不同于 `auto` 推导不携带 CV限制符信息，`decltype` 是携带的。
+
+### 追踪返回类型
+
+`auto` 和 `decltype` 搭配起来用的强大功能。
+
+举个例子：
+
+```c++
+template<typename T1, typename T2>
+auto Sum(T1 const& r, T2 const& l) -> decltype(t1+t2) {
+    return r+l;
+}
+```
+
+追踪返回类型还可以使函数指针的表达变得简单。以下两个函数的表达了相同的意思。
+```c++
+int (*(*pf())())(){
+    return nullptr;
+}
+
+auto pf1() -> auto (*)() -> int (*)(){
+    return nullptr;
+}
+```
+
+### 基于范围的 for 循环
+
+举个例子
+```c++
+vector<int> vi;
+
+for (auto e: vi){
+    // ...
+}
+
 ```
