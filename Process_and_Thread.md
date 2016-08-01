@@ -10,3 +10,48 @@
 
 >进程——资源分配的最小单位，线程——程序执行的最小单位
 
+
+[可重入函数与线程安全函数概念介绍](http://waret.iteye.com/blog/744169)
+
+[线程安全与可重入](http://www.cnblogs.com/welkinwalker/archive/2011/01/03/1925027.html)
+
+
+
+Qt 多线程编程模型
+```c++
+
+ class MyThread : public QThread
+ {
+ public:
+     void run();
+ };
+
+ void MyThread::run()
+ {
+     QTcpSocket socket;
+     // connect QTcpSocket's signals somewhere meaningful
+     ...
+     socket.connectToHost(hostName, portNumber);
+     exec();
+ }
+
+```
+
+Python 多线程编程模型
+```python
+
+import threading
+import math
+class CThreadTest(threading.Thread):
+    
+    def __init__(self):
+        threading.Thread.__init__(self)
+
+    def run(self):
+        i = 12.3
+        while True:
+            i = math.sin(i)*math.sin(i) + math.cos(2*i)
+
+```
+
+C++11 多线程
