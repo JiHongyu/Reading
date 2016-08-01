@@ -446,6 +446,93 @@ enum class Type: char{ A, B, C}
 + 编译时常量
 + 运行时常量
 
+在数组长度，枚举初值， `switch` 语句，模板参数等地方都需要编译时常量。
+
 常量表达式：`constexpr`
 
+该关键字既可作用于函数定义，也可以作用于变量定义。
+
+### 变长模板
+
+变长函数参数应用： `vsprintf`
+
+变长模板参数应用：`tuple`
+
+变长模板的两个重要概念：**模板参数报**，**包扩展**。
+
+变长模板也是可以进行递归推倒的。
+
+```c++
+// 变长模板应用
+template<class... E> class tuple;
+
+template<class Head, class... Tail>
+class tuple<Head, Tail...>: private tuple<Tail...>{
+    Head head;
+};
+
+template<>class tuple<>{};
+
+// 非类型变长模板应用
+template<long long first, long long... last>
+struct Multiple{
+    static const long long val = first * Multiple<last...>::val;
+};
+
+template<>
+struct Multiple<>{
+    static const long long val = 1L;
+};
+
+```
+
+包扩展可以展开的位置：
+
++ 表达式
++ 初始化列表
++ 基类描述列表
++ 类成员初始化列表
++ 模板参数列表
++ 通用属性列表
++ `lambda` 函数的捕捉列表
+
+### 原子类型及原子操作
+
+> 多线程了解不多，只是粗浅地看看
+
+原子类型的定义有两种：
+
++ `atomic_xxx` ( xxx 对应基本类型)
++ `std::atomic<T>` 模板类
+
+在多线程中，原子类型变量是不需要加锁的，可以当成普通变量使用。
+
+`atomic` 类型的操作详见 [这里](http://www.cplusplus.com/reference/atomic/)
+
+C++11 引入内存模型，可以 **指导** 和 **控制** 编译器对 C++ 多线程代码的优化。
+
+基本内存模型：
+
++ `memory_order_relaxed`
++ `memory_order_acquire`
++ `memory_order_release`
++ `memory_order_acq_rel`
++ `memory_order_consume`
++ `memory_order_seq_cst`
+
+### 线程局部存储
+
+线程局部存储 (TLS) 是单线程的全局/静态变量在多线程的推广。用法如下：
+
+```c++
+int thread_local errCode;
+```
+
+### 快速退出函数
+
+`quick_exit` 和 `at_quick_exit`
+
+### 
+
+# Chapter 7: 为改变思考方式而改变
 
