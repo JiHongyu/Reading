@@ -536,3 +536,49 @@ int thread_local errCode;
 
 # Chapter 7: 为改变思考方式而改变
 
+### 空指针值 `nullptr`
+
+`NULL` 会造成语义的二义性，而且不同平台对 `NULL` 的处理方式不同，导致了潜在的移植性问题。
+
+```c++
+typedef decltype(nullptr) nullptr_t;
+```
+
+`nullptr` 被定义为一个右值常量。
+
+### 默认函数（trival 函数簇）控制
+
++ 显式缺省函数：`=default`，默认编译器生成
++ 删除函数：`=delete`，禁止生成
+
+一个例子，禁止一个类在堆上或栈上分配。
+```c++
+class NoHeapAlloc{
+public:
+    void * operator new(std::size_t) = delete;
+};
+
+class NoStackAlloc{
+public:
+    ~ NoSatckAlloc() = delete;
+};
+```
+
+### lambda 函数
+
+lambda 函数语法规则：
+
+`[capture](parameters) mutable -> return_type {statement}`
+
+捕捉规则：
+
++ `[var]`: 值传递捕捉变量 var
++ `[=]`：值传递方式捕捉父作用域的变量
++ `[&var]`：引用传递捕捉变量 var
++ `[&]`：引用传递捕捉父作用域的变量
++ `[this]`：值传递捕捉当前 this 指针
+
+lambda 函数与仿函数是等价的。
+
+C/C++ 不允许局部函数出现，但是允许 lambda 函数
+
