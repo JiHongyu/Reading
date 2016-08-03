@@ -140,3 +140,167 @@ SELECT 列名称 FROM 表名称 WHERE 列 运算符 值
 | BETWEEN | 在某个范围内 |
 | LIKE    | 搜索某种模式 |
 
+例子：
+
+"Persons" 表
+
+| LastName | FirstName | Address        | City     | Year |
+|----------|-----------|----------------|----------|------|
+| Adams    | John      | Oxford Street  | London   | 1970 |
+| Bush     | George    | Fifth Avenue   | New York | 1975 |
+| Carter   | Thomas    | Changan Street | Beijing  | 1980 |
+| Gates    | Bill      | Xuanwumen 10   | Beijing  | 1985 |
+
+```sql
+select * from Person where City = 'Beijing'
+```
+
+结果：
+
+| LastName | FirstName | Address        | City    | Year |
+|----------|-----------|----------------|---------|------|
+| Carter   | Thomas    | Changan Street | Beijing | 1980 |
+| Gates    | Bill      | Xuanwumen 10   | Beijing | 1985 |
+
+注意：字符串需要用单引号环绕。
+
+### SQL AND & OR
+
+AND 和 OR 可在 WHERE 子语句中把两个或多个条件结合起来。如果第一个条件和第二个条件都成立，则 AND 运算符显示一条记录。如果第一个条件和第二个条件中只要有一个成立，则 OR 运算符显示一条记录。
+
+语法规则：
+
+```sql
+SELECT * FROM Persons WHERE FirstName='Thomas' AND LastName='Carter'
+SELECT * FROM Persons WHERE firstname='Thomas' OR lastname='Carter'
+```
+
+### SQL ORDER BY
+
+ORDER BY 语句用于根据指定的列对结果集进行排序。
+
+ORDER BY 语句默认按照升序对记录进行排序。
+
+如果您希望按照降序对记录进行排序，可以使用 DESC 关键字。
+
+例子：
+
+Orders 表:
+
+| Company  | OrderNumber |
+|----------|-------------|
+| IBM      | 3532        |
+| W3School | 2356        |
+| Apple    | 4698        |
+| W3School | 6953        |
+
+```sql
+-- 按 Company 升序排列
+SELECT * FROM Orders ORDER BY Company 
+
+-- 按 Company, OrderNumber 升序排列
+SELECT * FROM Orders ORDER BY Company, OrderNumber 
+
+-- 按 Company 降序排列
+SELECT * FROM Orders ORDER BY Company DESC 
+
+-- 按 Company 降序, OrderNumber 升序 排列
+SELECT Company, OrderNumber FROM Orders ORDER BY Company DESC, OrderNumber ASC 
+```
+
+结果自行分析
+
+### SQL INSERT INTO
+
+INSERT INTO 语句用于向表格中插入新的行。
+
+语法规则：
+
+```sql
+INSERT INTO 表名称 VALUES (值1, 值2,....)
+
+INSERT INTO table_name (列1, 列2,...) VALUES (值1, 值2,....)
+```
+
+例子：
+
+"Persons" 表：
+
+| LastName | FirstName | Address        | City    |
+|----------|-----------|----------------|---------|
+| Carter   | Thomas    | Changan Street | Beijing |
+
+```sql
+INSERT INTO Persons VALUES ('Gates', 'Bill', 'Xuanwumen 10', 'Beijing');
+INSERT INTO Persons (LastName, Address) VALUES ('Wilson', 'Champs-Elysees');
+```
+
+结果：
+
+| LastName | FirstName | Address        | City    |
+|----------|-----------|----------------|---------|
+| Carter   | Thomas    | Changan Street | Beijing |
+| Gates    | Bill      | Xuanwumen 10   | Beijing |
+| Wilson   |           | Champs-Elysees |         |
+
+### SQL UPDATE 
+
+Update 语句用于修改表中的数据。
+
+语法规则
+
+```sql
+UPDATE 表名称 SET 列名称 = 新值 WHERE 列名称 = 某值
+```
+
+例子：
+
+```sql
+-- 更新一个值
+UPDATE Person SET FirstName = 'Fred' WHERE LastName = 'Wilson' 
+
+-- 更新多个值
+UPDATE Person SET Address = 'Zhongshan 23', City = 'Nanjing'
+WHERE LastName = 'Wilson'
+```
+
+### SQL DELETE
+
+DELETE 语句用于删除表中的行。
+
+语法规则
+
+```sql
+DELETE FROM 表名称 WHERE 列名称 = 值
+
+-- 删除所用数据（不删除表）
+DELETE FROM 表名称;
+DELETE * FROM 表名称;
+
+```
+
+## SQL 高级教程
+
+### SQL TOP
+
+TOP 子句用于规定要返回的记录的数目。对于拥有数千条记录的大型表来说，TOP 子句是非常有用的。注释：并非所有的数据库系统都支持 TOP 子句。类似功能的子句有 LIMIT
+
+SQL Server 语法：
+```sql
+-- 选择 number 条记录
+SELECT TOP number column_name(s) FROM 表名称
+
+-- 选择总数的 number% 条记录
+SELECT TOP number PERCENT column_name(s) FROM 表名称
+```
+
+Oracle 语法：
+```sql
+SELECT column_name(s) FROM table_name WHERE ROWNUM <= number
+```
+
+MySQL 语法：
+```sql
+SELECT column_name(s) FROM table_name LIMIT number
+```
+
