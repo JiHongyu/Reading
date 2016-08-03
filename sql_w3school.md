@@ -304,3 +304,134 @@ MySQL 语法：
 SELECT column_name(s) FROM table_name LIMIT number
 ```
 
+### SQL LIKE
+
+LIKE 操作符用于在 WHERE 子句中搜索列中的指定模式。
+
+语法规则：
+
+```sql
+SELECT column_name(s)
+FROM 表名称
+WHERE column_name LIKE pattern
+```
+
+在搜索数据库中的数据时，SQL 通配符可以替代一个或多个字符。SQL 通配符必须与 LIKE 运算符一起使用。
+
+通配符：
+
++ `_` ：与任意单字符匹配
++ `%``：与包含一个或多个字符的字符串匹配
++ `[ ]`：与特定范围（例如，[a-f]）或特定集（例如，[abcdef]）中的任意单字符匹配。
++ `[^]` 或者 `[!]`：与特定范围（例如，[^a-f]）或特定集（例如，[^abcdef]）之外的任意单字符匹配。
+
+例子（[出处](http://www.cnblogs.com/ugoer/archive/2006/09/15/505596.html)）：
+
+```sql
+WHERE FirstName LIKE '_im' -- 可以找到所有三个字母的、以 im 结尾的名字（例如，Jim、Tim）。 
+ 
+WHERE LastName LIKE '%stein' -- 可以找到姓以 stein 结尾的所有员工。 
+ 
+WHERE LastName LIKE '%stein%' -- 可以找到姓中任意位置包括 stein 的所有员工。 
+ 
+WHERE FirstName LIKE '[JT]im' -- 可以找到三个字母的、以 im 结尾并以 J 或 T 开始的名字（即仅有 Jim 和 Tim） 
+ 
+WHERE LastName LIKE 'm[^c]%' -- 可以找到以 m 开始的、后面的（第二个）字母不为 c 的所有姓。
+```
+
+### SQL IN 
+
+IN 操作符允许我们在 WHERE 子句中规定多个值。
+
+```sql
+SELECT column_name(s)
+FROM 表名称
+WHERE column_name IN (value1,value2,...)
+```
+
+例子：
+
+Persons 表:
+
+| Id | LastName | FirstName | Address        | City     |
+|----|----------|-----------|----------------|----------|
+| 1  | Adams    | John      | Oxford Street  | London   |
+| 2  | Bush     | George    | Fifth Avenue   | New York |
+| 3  | Carter   | Thomas    | Changan Street | Beijing  |
+
+
+```sql
+SELECT * FROM Persons
+WHERE LastName IN ('Adams','Carter')
+```
+
+结果：
+
+| Id | LastName | FirstName | Address        | City    |
+|----|----------|-----------|----------------|---------|
+| 1  | Adams    | John      | Oxford Street  | London  |
+| 3  | Carter   | Thomas    | Changan Street | Beijing |
+
+### SQL BETWEEN 
+
+操作符 BETWEEN ... AND 会选取介于两个值之间的数据范围。这些值可以是数值、文本或者日期。
+
+语法规则：
+
+```sql
+SELECT column_name(s)
+FROM table_name
+WHERE column_name
+BETWEEN value1 AND value2
+```
+
+选择范围之外的数据
+
+```sql
+SELECT column_name(s)
+FROM table_name
+WHERE column_name
+NOT BETWEEN value1 AND value2
+```
+
+### SQL GROUP BY 
+
+GROUP BY 语句用于结合合计函数，根据一个或多个列对结果集进行分组。
+
+语法规则：
+
+```sql
+SELECT column_name, aggregate_function(column_name)
+FROM table_name
+WHERE column_name operator value
+GROUP BY column_name
+```
+
+例子：
+
+"Orders" 表：
+
+| O_Id | OrderDate  | OrderPrice | Customer |
+|------|------------|------------|----------|
+| 1    | 2008/12/29 | 1000       | Bush     |
+| 2    | 2008/11/23 | 1600       | Carter   |
+| 3    | 2008/10/05 | 700        | Bush     |
+| 4    | 2008/09/28 | 300        | Bush     |
+| 5    | 2008/08/06 | 2000       | Adams    |
+| 6    | 2008/07/21 | 100        | Carter   |
+
+```sql
+-- 统计顾客的总金额
+SELECT Customer,SUM(OrderPrice) FROM Orders
+GROUP BY Customer
+```
+
+结果：
+
+| Customer | SUM(OrderPrice) |
+|----------|-----------------|
+| Bush     | 2000            |
+| Carter   | 1700            |
+| Adams    | 2000            |
+
+### SQL Alias
