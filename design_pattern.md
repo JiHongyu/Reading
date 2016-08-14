@@ -1,0 +1,466 @@
+
+本文均摘自 Internet
+
+[设计模式原则详解](http://blog.csdn.net/hguisu/article/details/7571617 "设计模式原则详解")
+
+[设计模式](http://www.runoob.com/design-pattern/design-pattern-intro.html)
+# 设计模式基本原则
+
+我们在应用程序开发中，一般要求尽量两做到可维护性和可复用性。
+
+应用程序的复用可以提高应用程序的开发效率和质量，节约开发成本，恰当的复用还可以改善系统的可维护性。而在面向对象的设计里面，可维护性复用都是以面向对象设计原则为基础的，这些设计原则首先都是复用的原则，遵循这些设计原则可以有效地提高系统的复用性，同时提高系统的可维护性。 面向对象设计原则和设计模式也是对系统进行合理重构的指导方针。
+
+常用的面向对象设计原则包括7个，这些原则并不是孤立存在的，它们相互依赖，相互补充。
+
++ 单一职责原则
++ 开闭原则
++ 里氏替换原则
++ 依赖倒转原则
++ 迪米特法则
++ 合成复用法则
++ 接口隔离法则
+
+# 设计模式
+
+## 工厂模式
+
+```c++
+// 产品类
+class Product{
+public:
+    virtual void func() = 0;
+};
+
+class ProductA: public Product{
+public:
+    void func(){}
+};
+
+class ProductB: public Product{
+public:
+    void func(){}
+};
+
+// 工厂类
+class Factory{
+public:
+    virtual Product* product() = 0;
+};
+
+class FactoryA: public Factory{
+public:
+    Product* product(){return new ProductA;}
+};
+
+class FactoryB: public Factory{
+public:
+    Product* product(){return new ProductB;}
+};
+
+
+int main(){
+    int choose = 0;
+    cin>>choose;
+
+    Product* p = NULL;
+    Factory* f = NULL;
+
+    switch(choose){
+        case 1:
+            f = new FactoryA;
+            p = f->product();
+        case 2:
+            f = new FactoryB;
+            p = f->product();
+    }
+    exit(0);
+}
+```
+
+## 抽象工厂
+
+```c++
+// 一系列的产品类
+class ProductA{
+public:
+    virtual void funcA() = 0;
+};
+
+class ProductA1: public ProductA{
+public:
+    void funcA(){}
+};
+
+class ProductA2: public ProductA{
+public:
+    void funcA(){}
+};
+
+class ProductB{
+public:
+    virtual void funcB() = 0;
+};
+
+class ProductB1: public ProductB{
+public:
+    void funcB(){}
+};
+
+class ProductB2: public ProductB{
+public:
+    void funcB(){}
+};
+
+// 工厂类
+class Factory{
+public:
+    virtual ProductA* CreateProductA() = 0;
+    virtual ProductB* CreateProductB() = 0;
+};
+
+class Factory1: public Factory{
+public:
+    ProductA* CreateProductA(){ return new ProductA1;}
+    ProductB* CreateProductB(){ return new ProductB1;}
+};
+
+class Factory2: public Factory{
+public:
+    ProductA* CreateProductA(){ return new ProductA2;}
+    ProductB* CreateProductB(){ return new ProductB2;}
+};
+
+
+int main(){
+    int choose = 0;
+    cin>>choose;
+
+    ProductA* pa = NULL;
+    ProductB* pb = NULL;
+    Factory* f = NULL;
+
+    switch(choose){
+        case 1:
+            f = new Factory1;
+            pa = f->CreateProductA();
+            pb = f->CreateProductB();
+        case 2:
+            f = new Factory2;
+            pa = f->CreateProductA();
+            pb = f->CreateProductB();
+    }
+    exit(0);
+}
+```
+
+## 单例模式
+
+单例模式一般会涉及到多线程问题，所以单例模式一般会有两个版本。
+
+单线程版单例模式：
+
+```c++
+class Singleton{
+private:
+    Singleton(){}
+    static Singleton* m_obj = nullptr;
+public:
+    static Singleton* Instance(){
+        if (m_obj == nullptr)
+            m_obj = new Singleton;
+        return m_obj;
+    }
+};
+```
+
+多线程版单例模式：
+
+```c++
+
+// 外部加锁解锁函数
+extern void Lock();
+extern void Unlock();
+
+// 懒汉式，双重锁
+class Singleton{
+private:
+    Singleton(){}
+    static Singleton* m_obj = nullptr;
+public:
+    static Singleton* Instance(){
+        if (m_obj == nullptr){
+            Lock();
+            if (m_obj == nullptr){
+                m_obj = new Singleton;
+            }
+            Unlock();
+        }
+        return m_obj;
+    }
+};
+
+// 内部静态实例的懒汉式
+class Singleton2{
+private:
+    Singleton2(){}
+public:
+    static Singleton2* Instance(){
+        Lock(); // C++11 不需要
+        static Singleton2 m_ins;
+        Unlock(); // C++11 不需要
+
+        return &m_ins;
+    }
+};
+
+// 饿汉式，即程序一开始就会产生该类的实例
+class Singleton3{
+private:
+    Singleton3(){}
+    static const Singleton3* m_obj;
+public:
+    static Singleton3* Instance(){
+        return m_obj;
+    }
+}
+
+static const Singleton3::m_ins = new Singleton3;
+
+```
+
+## 建造者模式
+
+将一个复杂的对象的构建与它的表示分离，使得同样的构建过程可以创建不同的表示。
+
+[解惑](http://www.cnblogs.com/BeyondAnyTime/archive/2012/07/19/2599980.html)
+
+```c++
+class Product;
+
+class Builder{
+public:
+    virtual void build1() = 0;
+    virtual void build2() = 0;
+};
+
+class ConcreteBuilder1: public Builder{
+private:
+    Product  m_product;
+public:
+    void build1(){}
+    void build2(){}
+
+    Product GetResult(){return m_product;}
+}
+
+class Director{
+public:
+    void Construct(Builder &builder){
+
+        builder.build1();
+        builder.build2();
+
+    }
+}
+
+int main(){
+    Director director;
+    Builder * builder = new ConcreteBuilder1;
+    director.Construct(*builder);
+    Product product = builder->GetResult();
+    delete[] builder;
+    exit(0);
+}
+```
+
+## 原型模式
+
+在 C++ 中，原型模型本质上相当于 **拷贝构造函数**。
+
+## 适配器
+
+[参考](http://www.cnblogs.com/jiese/p/3166396.html)
+
+适配器可以分为：类适配和对象适配。
+
+```c++
+class Target{
+public:
+    virtual void Request() {} 
+};
+
+class Adaptee{
+public:
+    virtual void SpecialRequest() {}
+};
+
+// 类适配
+class Adapter1: public Target,   // 接口继承
+               private Adaptee  // 实现继承
+               {
+public:
+    void Request(){    // 适配
+        // do something
+        SpecialRequest();
+    }
+}
+
+// 对象适配
+class Adapter2: public Target{
+private:
+    Adaptee*  m_adaptee;
+public:
+    Adapter2(Adaptee* adaptee):m_adaptee(adaptee){}
+    void Request(){    // 适配
+        // do something
+        SpecialRequest();
+    }
+}
+```
+## 桥接模式
+
+将抽象部分与它的实现部分分离，使它们都可以独立地变化。
+
+```c++
+class Implementor{
+public:
+    virtual void OperationImp() = 0;
+};
+
+class ConcreteImplementor1: public Implementor{
+public:
+    void OperationImp(){}
+};
+
+class ConcreteImplementor2: public Implementor{
+public:
+    void OperationImp(){}
+};
+
+class Abstraction{
+public:
+    virtual void Operation() = 0;
+};
+
+class RefinedAbstraction: public Abstraction{
+private:
+    Implementor*   m_imp;
+public:
+    RefinedAbstraction(Implementor* imp):m_imp(imp){}
+    void Operation(){
+        m_imp->OperationImp();
+    }
+};
+```
+
+## 组合模式
+
+组合模式（Composite Pattern），又叫部分整体模式，是用于把一组相似的对象当作一个单一的对象。组合模式依据树形结构来组合对象，用来表示部分以及整体层次。这种类型的设计模式属于结构型模式，它创建了对象组的树形结构。
+这种模式创建了一个包含自己对象组的类。该类提供了修改相同对象组的方式。
+我们通过下面的实例来演示组合模式的用法。实例演示了一个组织中员工的层次结构。
+
+## 装饰器模式
+
+动态地给一个对象添加一些额外的职责。
+
+```c++
+class Component{
+public:
+    virtual void Operation() = 0;
+};
+
+class ConcreteComponent: public Component{
+public:
+    void Operation(){}
+};
+
+class Decorator: public Component{
+private:
+    Component * m_component;
+public:
+    void SetDecoration(Component * _cmp){m_component = _cmp;}
+    void Operation(){ m_component->Operation();}
+}
+
+class ConcreteDecorator: public Decorator{
+public:
+    void Foo(){}
+    void Operation(){
+        Decorator::Operation();
+        Foo();
+    }
+}
+
+int main(){
+
+    Component * c = new ConcreteComponent;
+
+    // 原始操作
+    c->Operation(); 
+
+    Decorator * dc = new ConcreteDecorator;
+    dc->SetDecoration(c);
+
+    // 增加装饰器后的操作
+    dc->Operation();
+
+    exit(0);
+}
+```
+
+## 外观模式
+
+有点类似于组合模式。
+
+为子系统中的一组接口提供一个一致的界面，Facade模式定义了一个高层接口，这个接口使得这一子系统更加容易使用。
+
+## 享元模式
+
+[参考资料](http://www.cnblogs.com/cxjchen/p/3194379.html)
+
+## 代理模式
+
+[参考资料](http://www.cnblogs.com/jiese/p/3177491.html)
+
+代理模式又有点像装饰器。。
+
+为其他对象提供一种代理以控制对这个对象的访问。
+
+适用性：
+
+在需要用比较通用和复杂的对象指针代替简单的指针的时候，使用Proxy模式。下面是一 些可以使用Proxy 模式常见情况： 
+1) 远程代理（Remote Proxy ）为一个对象在不同的地址空间提供局部代表。 NEXTSTEP[Add94] 使用NXProxy 类实现了这一目的。
+
+2 )虚代理（Virtual Proxy ）根据需要创建开销很大的对象。
+
+3) 保护代理（Protection Proxy）控制对原始对象的访问。保护代理用于对象应该有不同 的访问权限的时候。
+
+4 )智能指引（Smart Reference）取代了简单的指针，它在访问对象时执行一些附加操作。 它的典型用途包括：
+对指向实际对象的引用计数，这样当该对象没有引用时，可以自动释放它(也称为SmartPointers[Ede92 ] )。
+
+```c++
+class Subject{
+public:
+    virtual void Request() = 0;
+};
+
+class RealSubject: public Subject{
+public:
+    void Request(){}
+};
+
+class Proxy: public Subject{
+private:
+    Subject*  m_subject = nullptr;
+public:
+    void Request(){
+        if (m_subject == nullptr){
+            Subject = new RealSubject;
+        }
+        m_subject->Request();
+
+        // do something
+    }
+};
+```
+
