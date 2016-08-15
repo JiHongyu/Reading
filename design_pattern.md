@@ -464,3 +464,226 @@ public:
 };
 ```
 
+## 解释器模式
+
+解释器模式（Interpreter Pattern）提供了评估语言的语法或表达式的方式，它属于行为型模式。这种模式实现了一个表达式接口，该接口解释一个特定的上下文。这种模式被用在 SQL 解析、符号处理引擎等。
+
+## 模板方法模式
+
+定义一个操作中的算法的骨架，而将一些步骤延迟到子类中。TemplateMethod 使得子类可以不改变一个算法的结构即可重定义该算法的某些特定步骤。
+
+```c++
+class AbstractClass{
+public:
+    void TemplateMethod(){
+        PrimitiveOperation1();
+        PrimitiveOperation2();
+    }
+protected:
+    virtual void PrimitiveOperation1() = 0;
+    virtual void PrimitiveOperation2() = 0;
+};
+
+class ConcreteClass: public AbstractClass{
+protected:
+    void PrimitiveOperation1(){/* Do something*/}
+    void PrimitiveOperation2(){/* Do something*/}
+};
+```
+
+## 责任链
+
+```c++
+class Request{};
+
+class Handler{
+protected:
+    Handler *m_successor;
+public:
+    void SetSuccessor(Handler* handler){
+        m_successor = handler;
+    }
+    virtual void GetRequest(Request* request) = 0;
+};
+
+class ConcreteHandler1: public Handler{
+private:
+    bool SomeCondition(Request* r){ /* Do something */ }
+public:
+    void GetRequest(Request* request){
+        if ( SomeCondition(request) ){
+            // Do something
+        }else{
+            m_successor->GetRequest(request);
+        }
+    }
+}
+
+class ConcreteHandler2: public Handler{
+private:
+    bool SomeCondition(Request* r){ /* Do something */ }
+public:
+    void GetRequest(Request* request){
+        if ( SomeCondition(request) ){
+            // Do something
+        }else{
+            m_successor->GetRequest(request);
+        }
+    }
+}
+
+int main(){
+    
+    // 请求对象
+    Request *r = new Request;
+
+    // 任务处理对象
+    Handler * h1 = new ConcreteHandler1;
+    Handler * h2 = new ConcreteHandler2;
+
+    // 设置任务链关系
+    h1->SetSuccessor(h2);
+
+    // 分发请求数据
+    h1->GetRequest(r);
+
+    exit(0);
+}
+```
+
+## 命令模式
+
+命令模式（Command Pattern）是一种数据驱动的设计模式，它属于行为型模式。请求以命令的形式包裹在对象中，并传给调用对象。调用对象寻找可以处理该命令的合适的对象，并把该命令传给相应的对象，该对象执行命令。
+
+[参考资料1](http://blog.csdn.net/lcl_data/article/details/9080909)
+[参考资料2](http://www.cnblogs.com/jiese/p/3190414.html)
+
+```c++
+
+class ReceiverA;
+class ReceiverB;
+
+// 命令类
+class Command{
+public:
+    virtual void Execute() = 0;
+};
+
+class CommandA{
+private:
+    ReceiverA*    m_receiver;
+public:
+    CommandA( ReceiverA* r):m_receiver(r){}
+    void Execute(){m_receiver->ActionA();}
+};
+
+class CommandB{
+private:
+    ReceiverB*    m_receiver;
+public:
+    CommandB( ReceiverB* r):m_receiver(r){}
+    void Execute(){m_receiver->ActionB();}
+};
+
+// 接受者，命令真正的执行体，可以是任何类
+class ReceiverA{
+public:
+    void ActionA(){}
+};
+
+class ReceiverB{
+public:
+    void ActionB(){}
+}
+
+// 请求者
+class Invoker{
+    
+private:
+    deque<Command*>   m_command_queue;
+
+public:
+
+    void AddCommand(Command* command){
+        m_command_queue.push_back(command);
+    }
+
+    void Invoke(){
+        Command * _c = NULL;
+        while(!m_command_queue.empty()){
+            _c = m_command_queue.front();
+            _c->Execute();
+            m_command_queue.pop_front();
+        }
+    }
+}
+
+int main(){
+
+    //模拟两个命令执行
+    Invoker invoker;
+
+    ReceiverA  ra;
+    ReceiverB  rb;
+
+    Command * c1 = new CommandA(&ra);
+    Command * c2 = new CommandB(&rb);
+
+    invoker.AddCommand(c1);
+    invoker.AddCommand(c2);
+
+    invoker.Invoke(); 
+
+    exit(0);
+}
+```
+
+## 迭代器模式
+
+提供一种方法顺序访问一个聚合对象中各个元素, 而又不需暴露该对象的内部表示。
+
+例子写的不好，还是要参考 STL 的代码。
+
+```c++
+template<typename T>
+class Iterator{
+public:
+    virtual void Next() = 0;
+    virtual bool Finished() = 0;
+    virtual T* CurrentItem() = 0;
+    virtual ~Iterator(){}
+};
+
+template<typename T, unsigned int NUM>
+class CreateIterator: public Iterator<T>{
+private:
+    ConcreteAggregate<T> *   m_aggregate;
+    unsigned int m_idx;
+public:
+    CreateIterator(ConcreteAggregate<T,NUM>* agg):m_aggregate(agg),m_idx(0){}
+    void Next(){ ++m_idx;}
+    bool Finished(){ return m_idx==NUM? true: false;}
+    T* CurrentItem(){ &((*m_aggregate)[m_idx])}
+};
+
+class Aggregate{
+public:
+    virtual Iterator* CreateIterator() = 0;
+    virtual ~Aggregate(){}
+};
+
+template<typename T, unsigned int NUM>
+class ConcreteAggregate: public Aggregate{
+private:
+    T  m_data[NUM];
+public:
+    Iterator* CreateIterator(){
+        return new CreateIterator<T, NUM>(this);
+    }
+
+    T& operator[](unsigned int idx){
+        return m_data[idx];
+    }
+};
+```
+
