@@ -24,6 +24,8 @@
 
 ## 工厂模式
 
+在工厂模式中，我们在创建对象时不会对客户端暴露创建逻辑，并且是通过使用一个共同的接口来指向新创建的对象。
+
 ```c++
 // 产品类
 class Product{
@@ -33,12 +35,12 @@ public:
 
 class ProductA: public Product{
 public:
-    void func(){}
+    void func(){/* Do something */}
 };
 
 class ProductB: public Product{
 public:
-    void func(){}
+    void func(){/* Do something */}
 };
 
 // 工厂类
@@ -78,6 +80,10 @@ int main(){
 ```
 
 ## 抽象工厂
+
+抽象工厂模式（Abstract Factory Pattern）是围绕一个超级工厂创建其他工厂。该超级工厂又称为其他工厂的工厂。这种类型的设计模式属于创建型模式，它提供了一种创建对象的最佳方式。
+
+在抽象工厂模式中，接口是负责创建一个相关对象的工厂，不需要显式指定它们的类。每个生成的工厂都能按照工厂模式提供对象。
 
 ```c++
 // 一系列的产品类
@@ -313,7 +319,7 @@ public:
     Adapter2(Adaptee* adaptee):m_adaptee(adaptee){}
     void Request(){    // 适配
         // do something
-        SpecialRequest();
+        m_adaptee->SpecialRequest();
     }
 }
 ```
@@ -455,7 +461,7 @@ private:
 public:
     void Request(){
         if (m_subject == nullptr){
-            Subject = new RealSubject;
+            m_subject = new RealSubject;
         }
         m_subject->Request();
 
@@ -687,3 +693,168 @@ public:
 };
 ```
 
+## 中介者模式
+
+定义一个中介对象来封装系列对象之间的交互。中介者使各个对象不需要显示地相互引用，从而使其耦合性松散，而且可以独立地改变他们之间的交互。
+
+相当于将对象之间的通信用中介者对象封装起来。
+
+## 备忘录模式
+
+对一个需要保存状态的 Originator类 增添两个类：
+
+1. 状态类：存储 Originator对象的状态以及方便恢复。
+2. 容器类：存储这些状态类以便恢复。
+
+```c++
+#include <iostream>  
+#include <string>  
+using namespace std;  
+
+class Memento {  
+
+private:  
+    string state;  
+public:  
+    Memento(string state){  
+        this->state = state;  
+    }  
+    string getState() {  
+        return state;  
+    }  
+    void setState(string state) {  
+        this->state = state;  
+    }  
+};  
+  
+  
+class Originator {  
+
+private :  
+    string state;  
+public:  
+
+    string getState() {  
+        return state;  
+    }  
+    void setState(string state) {  
+        this->state = state;  
+    }  
+    Memento createMemento(){  
+        return Memento(this->state);  
+    }  
+    void restoreMemento(Memento memento){  
+        this->setState(memento.getState());  
+    }  
+};  
+
+class Caretaker { 
+
+private :
+    Memento memento;  
+public :  
+    Memento getMemento(){  
+        return memento;  
+    }  
+    void setMemento(Memento memento){  
+        this->memento = memento;  
+    }  
+}; 
+
+int main (int argc, char *argv[])     
+{  
+    Originator originator;  
+    originator.setState("状态1");  
+    cout<<"初始状态:"<<originator.getState()<<endl;  
+    Caretaker caretaker;  
+    caretaker.setMemento(originator.createMemento());  
+    originator.setState("状态2");  
+    cout<<"改变后状态:"<<originator.getState()<<endl;  
+    originator.restoreMemento(caretaker.getMemento());  
+    cout<<"恢复后状态:"<<originator.getState()<<endl;  
+}  
+```
+
+## 观察者模式
+
+当对象间存在一对多关系时，则使用观察者模式（Observer Pattern）。比如，当一个对象被修改时，则会自动通知它的依赖对象。观察者模式属于行为型模式。
+
+```c++
+// Observer
+class Observer{
+public:
+    virtual void update(Subject*)=0;
+    ~Observer(){}
+};
+
+class ConcreteObserverA: public Observer{
+public:
+    void update(Subject*){
+        /* Do something. */
+    }
+};
+
+class ConcreteObserverB: public Observer{
+public:
+    void update(Subject*){
+        /* Do something. */
+    }
+};
+
+// Subject
+
+class Subject{
+private:
+    list<Observer*>    m_observers;
+public:
+    void attach(Observer* observer){
+        m_observers.push_back(observer);
+    }
+    void detach(Observer* observer){
+        m_observers.erase(observer);
+    }
+
+    virtual void notify()=0;
+
+};
+
+class ConcreteSubjectA: public Subject{
+public:
+    void notify(){
+        for(e : m_observers){
+            e->update(this);
+        }
+    }
+}
+
+class ConcreteSubjectB: public Subject{
+public:
+    void notify(){
+        for(e : m_observers){
+            e->update(this);
+        }
+    }
+}
+```
+
+## 状态模式
+
+在状态模式（State Pattern）中，类的行为是基于它的状态改变的。这种类型的设计模式属于行为型模式。
+在状态模式中，我们创建表示各种状态的对象和一个行为随着状态对象改变而改变的 context 对象。
+
+上下文环境（Context）：它定义了客户程序需要的接口并维护一个具体状态角色的实例，将与状态相关的操作委托给当前的Concrete State对象来处理。
+
+抽象状态（State）：定义一个接口以封装使用上下文环境的的一个特定状态相关的行为。
+
+具体状态（Concrete State）：实现抽象状态定义的接口。 
+
+
+## 策略模式
+在策略模式（Strategy Pattern）中，一个类的行为或其算法可以在运行时更改。这种类型的设计模式属于行为型模式。
+
+在策略模式中，我们创建表示各种策略的对象和一个行为随着策略对象改变而改变的 context 对象。策略对象改变 context 对象的执行算法。
+
+
+## 访问者模式
+
+在访问者模式（Visitor Pattern）中，我们使用了一个访问者类，它改变了元素类的执行算法。通过这种方式，元素的执行算法可以随着访问者改变而改变。根据模式，元素对象已接受访问者对象，这样访问者对象就可以处理元素对象上的操作。

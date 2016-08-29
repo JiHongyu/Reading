@@ -20,7 +20,7 @@ def Decorater(func):
 
     def inner():
         # Do something
-        return func()
+        return func() # 注意内层函数返回调用的函数值，而不是函数对象
 
     return inner
 
@@ -64,6 +64,7 @@ def Foo():
 带有参数的装饰器，需要多加一层闭包函数
 ```python
 def Decorator_ARG(*args, **kwargs):
+
     def Decorator(func):
         print(args)
         print(kwargs)
@@ -74,6 +75,7 @@ def Decorator_ARG(*args, **kwargs):
             return func()
 
         return inner
+
     return Decorator
 
 

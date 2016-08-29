@@ -1053,4 +1053,4 @@ RDBMS 是 SQL 的基础，也是所有现代数据库系统诸如 Oracle、SQL S
 + Aggregate 函数：面向一系列的值，并返回一个单一的值。
 + Scalar 函数：面向某个单一的值，并返回基于输入值的一个单一的值。
 
-[函数大全](http://blog.csdn.net/sugang_ximi/article/details/6664748, 点我点我)
+[函数大全](http://blog.csdn.net/sugang_ximi/article/details/6664748 "点我点我")
