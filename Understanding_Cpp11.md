@@ -124,7 +124,7 @@ VS2013 貌似支持的不好
 
 ### 局部和匿名类型做模板参数
 
-C++11 放宽了这些限制， 则在C++98 是禁止的。
+C++11 放宽了这些限制， 则在C++98 是禁止的（在 VS 里面都是可以的啊）。
 
 ```c++
 struct {int i;} a;            // 匿名类型变量
@@ -229,7 +229,7 @@ int main(){
 
 右值引用的一个作用是绑定临时对象/变量，延长其生命周期至该引用的结束。
 
-__RVO(Return Value Optimization)/NRVO(Named RVO)__ : 返回值优化
+__RVO(Return Value Optimization)/NRVO(Named RVO)__ : 基于编译器的返回值优化
 
 RVO/NRVO 可以部分的解决 **移动语义** 的问题。
 

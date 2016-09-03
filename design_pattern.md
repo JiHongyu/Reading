@@ -183,11 +183,12 @@ public:
 
 ```c++
 
-// 外部加锁解锁函数
+// 外部加锁解锁函数，加锁的目的是只是针对 m_obj 的初始化，而不是访问。
 extern void Lock();
 extern void Unlock();
 
-// 懒汉式，双重锁
+// 懒汉式，双重判断，这种简单的判断虽然原理上是对的，但是忧郁编译器优化会导致
+// 局部指令的乱序执行，所以必须用内存屏障技术。
 class Singleton{
 private:
     Singleton(){}
@@ -211,15 +212,16 @@ private:
     Singleton2(){}
 public:
     static Singleton2* Instance(){
-        Lock(); // C++11 不需要
+        Lock(); // C++11 不需要，因为局部静态变量的初始化是线程安全的
         static Singleton2 m_ins;
-        Unlock(); // C++11 不需要
+        Unlock(); // C++11 不需要，因为局部静态变量的初始化是线程安全的
 
         return &m_ins;
     }
 };
 
 // 饿汉式，即程序一开始就会产生该类的实例
+// 缺点：构造函数几乎不能传入有效的参数
 class Singleton3{
 private:
     Singleton3(){}
@@ -287,7 +289,7 @@ int main(){
 
 [参考](http://www.cnblogs.com/jiese/p/3166396.html)
 
-适配器可以分为：类适配和对象适配。
+作为两个不兼容的接口之间的桥梁。适配器可以分为：类适配和对象适配。
 
 ```c++
 class Target{
@@ -301,7 +303,7 @@ public:
 };
 
 // 类适配
-class Adapter1: public Target,   // 接口继承
+class Adapter1: public Target,   // 接口继承（隐含了实现继承）
                private Adaptee  // 实现继承
                {
 public:
